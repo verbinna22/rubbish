@@ -35,7 +35,7 @@ jobs:
             *Тип:* ${{ github.event_name == 'issue_comment' && 'Обсуждение' || 'Код' }}
             *Текст:* ${{ github.event.comment.body }}
             *Ссылка:* ${{ github.event.comment.html_url }}
-          format: markdown
+          
 
       # --- Уведомление о новом PR (не draft) ---
       - name: Notify about new pull request
@@ -51,7 +51,7 @@ jobs:
             *Заголовок:* ${{ github.event.pull_request.title }}
             *Статус:* ${{ github.event.action == 'ready_for_review' && 'Готов к ревью (был драфтом)' || 'Открыт' }}
             *Ссылка:* ${{ github.event.pull_request.html_url }}
-          format: markdown
+          
 
       # --- Уведомление о назначении assignee ---
       - name: Notify about assignee
@@ -66,7 +66,7 @@ jobs:
             *Кому:* ${{ github.event.assignee.login }}
             *Кем:* ${{ github.actor }}
             *Ссылка:* ${{ github.event.pull_request.html_url }}
-          format: markdown
+          
 
       # --- Уведомление о запросе ревью (включая re-request) ---
       - name: Notify about review request
@@ -81,4 +81,4 @@ jobs:
             *Ревьюер:* ${{ github.event.requested_reviewer.login }}
             *Запросил:* ${{ github.actor }}
             *Ссылка:* ${{ github.event.pull_request.html_url }}
-          format: markdown
+          

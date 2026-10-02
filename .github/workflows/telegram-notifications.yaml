@@ -1,0 +1,84 @@
+name: GitHub to Telegram Notifications
+
+on:
+  workflow_dispatch:
+  # События, связанные с Pull Request
+  pull_request:
+    types:
+      - opened           # Новый PR
+      - ready_for_review # PR выведен из драфта
+      - assigned         # Добавлен assignee
+      - review_requested # Запрошен ревьюер (включая re-request)
+  
+  # События, связанные с комментариями
+  issue_comment:
+    types: [created]     # Новый комментарий в Issue или PR
+  
+  pull_request_review_comment:
+    types: [created]     # Новый комментарий в diff PR
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      # --- Уведомление о новом комментарии ---
+      - name: Notify about new comment
+        if: github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            💬 *Новый комментарий*
+            *Репозиторий:* ${{ github.repository }}
+            *Автор:* ${{ github.event.comment.user.login }}
+            *Тип:* ${{ github.event_name == 'issue_comment' && 'Обсуждение' || 'Код' }}
+            *Текст:* ${{ github.event.comment.body }}
+            *Ссылка:* ${{ github.event.comment.html_url }}
+          format: markdown
+
+      # --- Уведомление о новом PR (не draft) ---
+      - name: Notify about new pull request
+        if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'ready_for_review')
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🚀 *Новый Pull Request*
+            *Репозиторий:* ${{ github.repository }}
+            *Автор:* ${{ github.event.pull_request.user.login }}
+            *Заголовок:* ${{ github.event.pull_request.title }}
+            *Статус:* ${{ github.event.action == 'ready_for_review' && 'Готов к ревью (был драфтом)' || 'Открыт' }}
+            *Ссылка:* ${{ github.event.pull_request.html_url }}
+          format: markdown
+
+      # --- Уведомление о назначении assignee ---
+      - name: Notify about assignee
+        if: github.event_name == 'pull_request' && github.event.action == 'assigned'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            👤 *Назначен исполнитель*
+            *PR:* #${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}
+            *Кому:* ${{ github.event.assignee.login }}
+            *Кем:* ${{ github.actor }}
+            *Ссылка:* ${{ github.event.pull_request.html_url }}
+          format: markdown
+
+      # --- Уведомление о запросе ревью (включая re-request) ---
+      - name: Notify about review request
+        if: github.event_name == 'pull_request' && github.event.action == 'review_requested'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🔍 *Запрошено ревью*
+            *PR:* #${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}
+            *Ревьюер:* ${{ github.event.requested_reviewer.login }}
+            *Запросил:* ${{ github.actor }}
+            *Ссылка:* ${{ github.event.pull_request.html_url }}
+          format: markdown
